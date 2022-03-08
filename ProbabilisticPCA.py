@@ -2,6 +2,7 @@ import numpy as np
 import scipy
 import matplotlib.pyplot as plt
 from scipy.stats import multivariate_normal
+from sklearn.decomposition import PCA
 
 class PPCA():
     def __init__(self, n_components, sigma=None):
@@ -10,8 +11,25 @@ class PPCA():
         self.components_ = None
         self.sigma_ = sigma # noise_variance
         self.b_fitted = False
+        self.eigenvectors_ = None
+        self.engenvalues_ = None
     
     def fit(self, X):
+        
+        self.mean_ = X.mean(axis=0)
+        X_ = X - self.mean_
+        model = PCA(n_components=X.shape[1])
+        model.fit(X_)
+        
+        eigenvalues = model.explained_variance_
+        eigenvectors = model.components_
+        self.eigenvalues_ = eigenvalues
+        self.eigenvectors = eigenvectors
+        
+        #print(eigenvalues)
+        #print(eigenvectors)
+        
+        '''
         # eigen decomposition
         self.mean_ = X.mean(axis=0)
         X_ = X - self.mean_
@@ -25,30 +43,20 @@ class PPCA():
         eigenvalues = eigenvalues[a]
         eigenvectors = eigenvectors[a]
         eigenvectors = np.real(eigenvectors)
-
+        '''
         # ugly math
         if self.sigma_ is None:
-            #print("Here")
-            #print(self.n_components_)
-            #print(eigenvalues[self.n_components_:])
             self.sigma_ = np.mean(eigenvalues[self.n_components_:])
-            #print(self.sigma_)
         
-        # self.components_ = eigenvectors[:, :self.n_components_]
-        L = np.diag(eigenvalues[:self.n_components_])# watch out for this for n_components_ == 1
+        L = np.diag(eigenvalues[:self.n_components_])# watch out for 1 dim
         if self.n_components_ == 1:
             L = L[0] - 1
             L = np.sqrt(L)
             self.components_ = ((eigenvectors[:, 0]) * L).reshape(-1, 1)
         else:
-            #print(L)
-            #print(self.sigma_)
             L -= self.sigma_ * np.identity(self.n_components_)
-            #print(L)
             L = scipy.linalg.sqrtm(L)
-            # print(L)
             self.components_ = eigenvectors[:, :self.n_components_].dot(L)
-            # print(self.components_)
         
         self.b_fitted = True
     
@@ -56,10 +64,8 @@ class PPCA():
         if not self.b_fitted:
             print("Not so fast")
             return
-        # print(self.components_)
         M = np.matmul(self.components_.T, self.components_) + self.sigma_ * np.identity(self.n_components_)
         M = np.linalg.inv(M)
-        # print(M)
         Z = []
         for x in X:
             z = M.dot(self.components_.T).dot(x - self.mean_)
