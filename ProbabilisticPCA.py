@@ -12,15 +12,14 @@ class PPCA():
         self.b_fitted = False
     
     def fit(self, X):
-        import numpy as np
-        import scipy
-        import matplotlib.pyplot as plt
         # eigen decomposition
         self.mean_ = X.mean(axis=0)
         X_ = X - self.mean_
         S = X_.T.dot(X_) * (1.0/X_.shape[0])
         eigenvalues, eigenvectors = np.linalg.eig(S)
+        engenvalues = np.maximum(eigenvalues, 0)
         eigenvalues = np.real(eigenvalues)
+        # print(eigenvalues)
         a = eigenvalues.argsort()[::-1]
         
         eigenvalues = eigenvalues[a]
@@ -29,7 +28,11 @@ class PPCA():
 
         # ugly math
         if self.sigma_ is None:
+            #print("Here")
+            #print(self.n_components_)
+            #print(eigenvalues[self.n_components_:])
             self.sigma_ = np.mean(eigenvalues[self.n_components_:])
+            #print(self.sigma_)
         
         # self.components_ = eigenvectors[:, :self.n_components_]
         L = np.diag(eigenvalues[:self.n_components_])# watch out for this for n_components_ == 1
@@ -38,9 +41,14 @@ class PPCA():
             L = np.sqrt(L)
             self.components_ = ((eigenvectors[:, 0]) * L).reshape(-1, 1)
         else:
+            #print(L)
+            #print(self.sigma_)
             L -= self.sigma_ * np.identity(self.n_components_)
+            #print(L)
             L = scipy.linalg.sqrtm(L)
+            # print(L)
             self.components_ = eigenvectors[:, :self.n_components_].dot(L)
+            # print(self.components_)
         
         self.b_fitted = True
     
@@ -48,8 +56,10 @@ class PPCA():
         if not self.b_fitted:
             print("Not so fast")
             return
+        # print(self.components_)
         M = np.matmul(self.components_.T, self.components_) + self.sigma_ * np.identity(self.n_components_)
         M = np.linalg.inv(M)
+        # print(M)
         Z = []
         for x in X:
             z = M.dot(self.components_.T).dot(x - self.mean_)
