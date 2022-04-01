@@ -50,7 +50,8 @@ class PPCA():
         
         L = np.diag(eigenvalues[:self.n_components_])# watch out for 1 dim
         if self.n_components_ == 1:
-            L = L[0] - 1
+            print(L[0])
+            L = L[0] - self.sigma_ * 1
             L = np.sqrt(L)
             self.components_ = ((eigenvectors[:, 0]) * L).reshape(-1, 1)
         else:
