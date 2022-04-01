@@ -26,31 +26,12 @@ class PPCA():
         self.eigenvalues_ = eigenvalues
         self.eigenvectors = eigenvectors
         
-        #print(eigenvalues)
-        #print(eigenvectors)
-        
-        '''
-        # eigen decomposition
-        self.mean_ = X.mean(axis=0)
-        X_ = X - self.mean_
-        S = X_.T.dot(X_) * (1.0/X_.shape[0])
-        eigenvalues, eigenvectors = np.linalg.eig(S)
-        engenvalues = np.maximum(eigenvalues, 0)
-        eigenvalues = np.real(eigenvalues)
-        # print(eigenvalues)
-        a = eigenvalues.argsort()[::-1]
-        
-        eigenvalues = eigenvalues[a]
-        eigenvectors = eigenvectors[a]
-        eigenvectors = np.real(eigenvectors)
-        '''
         # ugly math
         if self.sigma_ is None:
             self.sigma_ = np.mean(eigenvalues[self.n_components_:])
         
         L = np.diag(eigenvalues[:self.n_components_])# watch out for 1 dim
         if self.n_components_ == 1:
-            # print(L[0])
             L = L[0] - self.sigma_ * 1
             L = np.sqrt(L)
             self.components_ = ((eigenvectors[:, 0]) * L).reshape(-1, 1)
@@ -99,7 +80,6 @@ class PPCA():
         density = rv.pdf(coordinates)
 
         if ax is None:
-            # fig, ax = plt.subplots(1)
             ax = plt.gca()
         ax.contour(xx, yy, density, colors='k', levels=levels, linewidths=linewidths)
         ax.set_aspect('equal')
